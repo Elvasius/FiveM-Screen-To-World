@@ -316,15 +316,28 @@ function exitCursor()
     LeaveCursorMode()
 end
 
-function getPointAtCursor()
+function getPointAtCursor(toIgnore)
     camHandle = GetRenderingCam()
     local camCoords = GetCamCoord(camHandle)
-    print(camCoords)
-    local dirV = getDirectionVectorAtCursor(camCoords)
+    
+    local dirV = getNormalVectorAtCursor(camCoords)
 
-    local hit = StartShapeTestSweptSphere(camCoords.x, camCoords.y, camCoords.z, camCoords.x+dirV.x*1000, camCoords.y+dirV.y*1000, camCoords.z+dirV.z*1000, 4, 3, -1, 4);
+    local hit = StartShapeTestSweptSphere(camCoords.x, camCoords.y, camCoords.z, camCoords.x+dirV.x*1000, camCoords.y+dirV.y*1000, camCoords.z+dirV.z*1000, 4, -1, toIgnore, 4);
     local retval, hasHit, endCoords, surfaceNormal, entityHit =GetShapeTestResult(hit)
     return endCoords
+end
+function getEntityAtCursor()
+    print(camHandle)
+    local camCoords = GetCamCoord(camHandle)
+    local dirV = getNormalVectorAtCursor(camCoords)
+
+    local hit = StartShapeTestSweptSphere(camCoords.x, camCoords.y, camCoords.z, camCoords.x+dirV.x*1000, camCoords.y+dirV.y*1000, camCoords.z+dirV.z*1000, 4, -1, toIgnore, 4);
+    local retval, hasHit, endCoords, surfaceNormal, entityHit =GetShapeTestResult(hit)
+   
+    return entityHit
+end
+function setCamHandle(_camHandle) 
+    camHandle=_camHandle
 end
 -- Debug Functions 
 function drawFarPlaneLines() 
@@ -432,7 +445,7 @@ function camAct()
     local coords = GetEntityCoords(pedId)
     camHandle = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
     local res = vector3(coords.x, (coords.y)*cos(-90) - (coords.z)*sin(-90), (coords.y)*sin(-90)+(coords.z)*cos(-90))
-    SetCamCoord(camHandle, coords+vector3(0, 0 ,50))
+    SetCamCoord(camHandle, coords+vector3(0, 0 ,30))
     SetCamRot(camHandle, vector3(-90, 0, 0.0), 2)
 
     SetCamFov(camHandle, 50.0)
@@ -452,9 +465,13 @@ function destroyCar()
               
                 local dirV = getNormalVectorAtCursor(camCoords)
          
-                local hit = StartShapeTestSweptSphere(camCoords.x, camCoords.y, camCoords.z, camCoords.x+dirV.x*100, camCoords.y+dirV.y*100, camCoords.z+dirV.z*100, 4, 3, -1, 4);
+                local hit = StartShapeTestSweptSphere(camCoords.x, camCoords.y, camCoords.z, camCoords.x+dirV.x*100, camCoords.y+dirV.y*100, camCoords.z+dirV.z*100, 4, -1, -1, 4);
                 local retval, hasHit, endCoords, surfaceNormal, entityHit =GetShapeTestResult(hit)
-                AddExplosion(endCoords.x, endCoords.y, endCoords.z, 26, 1000, false, false, 1)
+         
+                DeleteEntity(entityHit)
+                --AddExplosion(endCoords.x, endCoords.y, endCoords.z, 26, 1000, false, false, 1)
+                             
+    
             end
             Wait(1)
         end
@@ -471,4 +488,5 @@ RegisterCommand("destroyCar", destroyCar, false)
 
 exports('normAtCursor', getNormalVectorAtCursor)
 exports('getPointAtCursor', getPointAtCursor)
-
+exports('setCamHandle', setCamHandle)
+exports('getEntityAtCursor', getEntityAtCursor)
